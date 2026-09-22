@@ -8,5 +8,9 @@ export function analyzeTimeline(items:Activity[],now=new Date()){
   for(const item of items){ if(!item.from||(!item.to&&!item.current)){invalid.push(item.id);continue} const a=toMonth(item.from),b=item.current?end:toMonth(item.to); if(a>b){invalid.push(item.id);continue} for(let m=Math.max(a,start);m<=Math.min(b,end);m++) counts.set(m,(counts.get(m)||0)+1) }
   const ranges=(months:number[])=>{ const out:{from:string;to:string}[]=[]; if(!months.length)return out; let a=months[0],b=a; for(const m of months.slice(1)){if(m===b+1)b=m;else{out.push({from:fromMonth(a),to:fromMonth(b)});a=b=m}} out.push({from:fromMonth(a),to:fromMonth(b)});return out };
   const gaps:number[]=[],overlaps:number[]=[]; for(let m=start;m<=end;m++){const c=counts.get(m)||0;if(c===0)gaps.push(m);if(c>1)overlaps.push(m)}
-  return {window,gaps:ranges(gaps),overlaps:ranges(overlaps),invalid,complete:!gaps.length&&!overlaps.length&&!invalid.length};
+  const total=end-start+1,covered=[...counts.values()].filter(c=>c>0).length;
+  return {window,gaps:ranges(gaps),overlaps:ranges(overlaps),invalid,complete:!gaps.length&&!overlaps.length&&!invalid.length,covered,total,percent:Math.round(covered/total*100),counts};
 }
+export function previousMonth(value:string){return fromMonth(toMonth(value)-1)}
+export function compareMonths(a:string,b:string){return toMonth(a)-toMonth(b)}
+export function monthsInWindow(now=new Date()){const w=tenYearWindow(now),a=toMonth(w.start),b=toMonth(w.end);return Array.from({length:b-a+1},(_,i)=>fromMonth(a+i))}
