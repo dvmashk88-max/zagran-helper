@@ -1,4 +1,4 @@
-export const METRIC_EVENTS=["visit","application_started","review_reached","kit_completed"] as const;
+export const METRIC_EVENTS=["visit","start","reached_review","kit_ready","gosuslugi_click"] as const;
 export type MetricEvent=typeof METRIC_EVENTS[number];
 export type Rating="up"|"down";
 export function buildMetricPayload(event:MetricEvent){return{event}}

@@ -1,4 +1,4 @@
-const EVENTS={visit:"visits",application_started:"starts",review_reached:"reviews",kit_completed:"kits"};
+const EVENTS={visit:"visits",start:"starts",reached_review:"reviews",kit_ready:"kits",gosuslugi_click:"gosuslugi_clicks"};
 const headers=origin=>({"access-control-allow-origin":origin,"access-control-allow-methods":"GET,POST,OPTIONS","access-control-allow-headers":"content-type","content-type":"application/json","vary":"Origin"});
 const reply=(body,status,origin)=>new Response(JSON.stringify(body),{status,headers:headers(origin)});
 
@@ -6,7 +6,7 @@ export default {
  async fetch(request,env){
   const origin=request.headers.get("Origin")||"";
   const allowed=env.ALLOWED_ORIGIN||"";
-  if(origin!==allowed)return reply({error:"origin_not_allowed"},403,allowed);
+  if(request.method!=="GET"&&origin!==allowed)return reply({error:"origin_not_allowed"},403,allowed);
   if(request.method==="OPTIONS")return new Response(null,{status:204,headers:headers(allowed)});
   const path=new URL(request.url).pathname.replace(/\/$/,"");
   if(request.method==="POST"&&path.endsWith("/event")){

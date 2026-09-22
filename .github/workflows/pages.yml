@@ -1,5 +1,11 @@
 name: Deploy to GitHub Pages
-on: {workflow_dispatch: {}}
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: pages
+  cancel-in-progress: true
 permissions: {contents: read, pages: write, id-token: write}
 jobs:
   build:
@@ -11,6 +17,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          VITE_PUBLIC_METRICS_ENDPOINT: ${{ vars.VITE_PUBLIC_METRICS_ENDPOINT }}
       - uses: actions/upload-pages-artifact@v3
         with: {path: dist}
       - uses: actions/deploy-pages@v4
