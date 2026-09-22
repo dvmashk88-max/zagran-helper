@@ -1,0 +1,12 @@
+import test from "node:test"; import assert from "node:assert/strict";
+import {analyzeTimeline,tenYearWindow} from "../lib/timeline"; import {canSelectForm,getCurrentForm} from "../lib/forms"; import {DRAFT_KEY,finishApplication,loadDraft,saveDraft,TTL_MS} from "../lib/storage"; import {EMPTY_DRAFT,type Activity} from "../lib/domain"; import {validateDraft} from "../lib/validation";
+const now=new Date("2026-09-22T12:00:00Z"); const a=(from:string,to:string,current=false,id="a"):Activity=>({id,kind:"work",from,to,current,organization:"TEST",position:"TEST",address:"TEST"});
+test("10-year window is calculated to the current month",()=>assert.deepEqual(tenYearWindow(now),{start:"2016-09",end:"2026-09"}));
+test("detects a two-month gap",()=>{const r=analyzeTimeline([a("2016-09","2021-06"),a("2021-09","",true,"b")],now);assert.deepEqual(r.gaps,[{from:"2021-07",to:"2021-08"}])});
+test("detects overlap",()=>{const r=analyzeTimeline([a("2016-09","2022-01"),a("2021-12","",true,"b")],now);assert.deepEqual(r.overlaps,[{from:"2021-12",to:"2022-01"}])});
+test("complete coverage passes",()=>assert.equal(analyzeTimeline([a("2016-09","",true)],now).complete,true));
+test("required fields are validated",()=>assert.ok(validateDraft(EMPTY_DRAFT,now).length>10));
+test("CURRENT form follows passport choice",()=>{assert.equal(getCurrentForm("5y").id,"passport-5y-186");assert.equal(getCurrentForm("10y").id,"passport-10y-996")});
+test("future form cannot be selected",()=>assert.equal(canSelectForm("passport-future-83"),false));
+test("TTL removes expired PII before returning it",()=>{const m=new Map<string,string>();const s={getItem:(k:string)=>m.get(k)??null,setItem:(k:string,v:string)=>m.set(k,v),removeItem:(k:string)=>m.delete(k)};saveDraft(s,EMPTY_DRAFT,100);assert.equal(loadDraft(s,100+TTL_MS).expired,true);assert.equal(s.getItem(DRAFT_KEY),null)});
+test("finishApplication removes questionnaire content",()=>{const m=new Map<string,string>();const s={getItem:(k:string)=>m.get(k)??null,setItem:(k:string,v:string)=>m.set(k,v),removeItem:(k:string)=>m.delete(k)};saveDraft(s,{...EMPTY_DRAFT,lastName:"ТЕСТ"},100);assert.equal(finishApplication(s),true);assert.equal(s.getItem(DRAFT_KEY),null)});
